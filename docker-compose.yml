@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  flight-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flight-api
+    ports:
+      - "${PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      GIN_MODE: ${GIN_MODE}
+      JWT_SECRET: ${JWT_SECRET}
+      AMADEUS_BASE_URL: ${AMADEUS_BASE_URL}
+      AMADEUS_CLIENT_ID: ${AMADEUS_CLIENT_ID}
+      AMADEUS_CLIENT_SECRET: ${AMADEUS_CLIENT_SECRET}
+      SERP_API_GOOGLEFLIGHTS_BASE_URL: ${SERP_API_GOOGLEFLIGHTS_BASE_URL}
+      SERP_API_GOOGLEFLIGHTS_API_KEY: ${SERP_API_GOOGLEFLIGHTS_API_KEY}
+    restart: always
+    networks:
+      - flight-net
+
+networks:
+  flight-net:
+    driver: bridge

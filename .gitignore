@@ -1,0 +1,106 @@
+# ============================================
+# 🐹 Go Language
+# ============================================
+
+# Build artifacts
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go build cache and modules
+*.log
+*.tmp
+*.swp
+*.DS_Store
+.idea/
+.vscode/
+*.iml
+*.class
+
+# Dependency directories
+vendor/
+pkg/
+dist/
+build/
+
+# Go workspace & binary outputs
+/go.work
+/go.work.sum
+/go.sum
+/go.mod~
+
+# ============================================
+# 🧪 Test and Coverage
+# ============================================
+
+# Test binary and coverage reports
+*.cover
+*.coverage
+*.cov
+coverage.*
+coverage.out
+*.prof
+*.pprof
+
+# ============================================
+# 🐳 Docker
+# ============================================
+
+# Local Docker artifacts
+*.tar
+.docker/
+docker-compose.override.yml
+.env.local
+.env.dev
+.env.test
+
+# Ignore runtime secrets (the real .env should be gitignored)
+.env
+!example.env  # keep an example template
+
+# ============================================
+# 🧰 JetBrains / GoLand
+# ============================================
+
+# Project files and IDE settings
+.idea/
+*.iml
+out/
+*.ipr
+*.iws
+
+# ============================================
+# ⚙️ System Files
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.nfs*
+
+# ============================================
+# 🚀 Custom Project Folders
+# ============================================
+
+# Compiled Go binary
+flight-service
+
+# Logs and temporary data
+logs/
+tmp/
+.cache/
+.envrc
