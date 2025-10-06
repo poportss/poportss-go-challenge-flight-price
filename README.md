@@ -1,7 +1,7 @@
 # ✈️ Go Flight Price Challenge
 
 A concurrent, secure, and extensible **Go microservice** that aggregates **flight offers** from multiple providers — **Amadeus**, **Google Flights (
-SerpAPI)**, **AirScraper (RapidAPI)**, and a **Mock provider** — returning the **cheapest**, **fastest**, and **comparable offers** for a given route.
+SerpAPI)**, and a **Mock provider** — returning the **cheapest**, **fastest**, and **comparable offers** for a given route.
 
 This project was built as part of a **technical interview challenge** to demonstrate:
 
@@ -246,31 +246,58 @@ curl -N -H "Authorization: Bearer <JWT_TOKEN>"   http://localhost:8080/sse/GRU|J
 ---
 
 ## 🧠 Caching Behavior
-
-Each `SearchRequest` result is cached for **30 seconds** using an in-memory TTL cache. Expired entries are automatically cleaned up by a background
-goroutine.
+Each search result is cached for **30 seconds** in memory.  
+If the same query is made within the TTL, the cached response is returned immediately.
 
 ---
 
 ## 🧪 Running Tests
-
 ```bash
 go test -v ./...
 ```
 
 ---
 
-## 🚀 Run the Project
+## 🐳 Running with Docker
 
+The project supports full Docker-based builds using a multi-stage `Dockerfile`.
+
+### 🔹 Build the image
 ```bash
-git clone https://github.com/<your-username>/go-challenge-flight-price.git
-cd go-challenge-flight-price
-export PORT=8080
-export JWT_SECRET=devsecret
-go run ./cmd/api
+docker build -t flight-price-service .
 ```
 
-Then test the endpoints with Postman or curl.
+### 🔹 Run the container
+```bash
+docker run -p 8080:8080   -e PORT=8080   -e JWT_SECRET=devsecret   -e AMADEUS_BASE_URL=https://test.api.amadeus.com   -e AMADEUS_CLIENT_ID=your_amadeus_client_id   -e AMADEUS_CLIENT_SECRET=your_amadeus_client_secret   -e SERP_API_GOOGLEFLIGHTS_BASE_URL=https://serpapi.com/search   -e SERP_API_GOOGLEFLIGHTS_API_KEY=your_serpapi_key   flight-price-service
+```
+
+Then open: [http://localhost:8080](http://localhost:8080)
+
+---
+
+## 🧩 Run with Docker Compose (recommended)
+
+If you prefer to use Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+The compose file automatically reads variables from your `.env`.
+
+### Example `.env`
+```env
+PORT=8080
+JWT_SECRET=devsecret
+
+AMADEUS_BASE_URL=https://test.api.amadeus.com
+AMADEUS_CLIENT_ID=your_amadeus_client_id
+AMADEUS_CLIENT_SECRET=your_amadeus_client_secret
+
+SERP_API_GOOGLEFLIGHTS_BASE_URL=https://serpapi.com/search
+SERP_API_GOOGLEFLIGHTS_API_KEY=your_serpapi_key
+```
 
 ---
 
@@ -278,10 +305,9 @@ Then test the endpoints with Postman or curl.
 
 **Rafael Portela**  
 Go Developer | Cloud & API Engineering  
-📧 [Contact via LinkedIn](https://linkedin.com)
+📧 [LinkedIn](https://www.linkedin.com/in/rafaelportela-dev)
 
 ---
 
 ## 📄 License
-
-MIT License — free to use, modify, and share.
+MIT License — free to use, modify, and distribute.

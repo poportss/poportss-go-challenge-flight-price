@@ -20,8 +20,8 @@ FROM gcr.io/distroless/base-debian12
 WORKDIR /app
 COPY --from=build /app/flight-service /app/flight-service
 
-# Apenas declare que essas variáveis existirão
-# (elas serão injetadas pelo docker-compose via .env)
+# Just declare that these variables will exist
+# (they will be injected by docker-compose via .env)
 ENV PORT=8080
 ENV GIN_MODE=release
 

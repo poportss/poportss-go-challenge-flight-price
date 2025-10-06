@@ -25,15 +25,15 @@ func NewService(p []providers.Provider, timeout time.Duration, cache Cache) *Ser
 	return &Service{providers: p, timeout: timeout, cache: cache}
 }
 
-// AddProvider adiciona um provider dinamicamente ao service
+// AddProvider dynamically adds a new provider to the service
 func (s *Service) AddProvider(p providers.Provider) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.providers = append(s.providers, p)
-	log.Printf("✓ Provider %s adicionado dinamicamente", p.Name())
+	log.Printf("✓ Provider %s added dynamically", p.Name())
 }
 
-// RemoveProvider remove um provider pelo nome
+// RemoveProvider removes a provider by its name
 func (s *Service) RemoveProvider(name string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -41,12 +41,13 @@ func (s *Service) RemoveProvider(name string) {
 	for i, p := range s.providers {
 		if p.Name() == name {
 			s.providers = append(s.providers[:i], s.providers[i+1:]...)
-			log.Printf("✓ Provider %s removido", name)
+			log.Printf("✓ Provider %s removed", name)
 			return
 		}
 	}
 }
 
+// Search queries all active providers concurrently and aggregates the results
 func (s *Service) Search(ctx context.Context, req domain.SearchRequest) (domain.AggregatedResponse, error) {
 	cacheKey := fmt.Sprintf("%s|%s|%s|%s",
 		req.Origin,
@@ -54,18 +55,18 @@ func (s *Service) Search(ctx context.Context, req domain.SearchRequest) (domain.
 		req.StartDate.Format("2006-01-02"),
 		req.EndDate.Format("2006-01-02"))
 
-	//// Tentar buscar no cache
+	// Try fetching from cache first
 	if v, ok := s.cache.Get(cacheKey); ok {
-		log.Printf("✓ Cache HIT para %s", cacheKey)
+		log.Printf("✓ Cache HIT for %s", cacheKey)
 		return v.(domain.AggregatedResponse), nil
 	}
 
-	log.Printf("✗ Cache MISS para %s", cacheKey)
+	log.Printf("✗ Cache MISS for %s", cacheKey)
 
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	// Lock para leitura segura dos providers
+	// Lock for safe concurrent access to the provider list
 	s.mu.RLock()
 	providersCopy := make([]providers.Provider, len(s.providers))
 	copy(providersCopy, s.providers)
@@ -82,12 +83,12 @@ func (s *Service) Search(ctx context.Context, req domain.SearchRequest) (domain.
 	for _, p := range providersCopy {
 		prov := p
 		eg.Go(func() error {
-			log.Printf("→ Buscando em %s...", prov.Name())
+			log.Printf("→ Fetching from %s...", prov.Name())
 			qs, err := prov.Search(ctx, req.Origin, req.Destination, req.StartDate, req.EndDate)
 			if err != nil {
-				log.Printf("✗ Erro no provider %s: %v", prov.Name(), err)
+				log.Printf("✗ Error from provider %s: %v", prov.Name(), err)
 			} else {
-				log.Printf("✓ Provider %s retornou %d quotes", prov.Name(), len(qs))
+				log.Printf("✓ Provider %s returned %d quotes", prov.Name(), len(qs))
 			}
 			resCh <- result{provider: prov.Name(), quotes: qs, err: err}
 			return nil
@@ -109,10 +110,10 @@ func (s *Service) Search(ctx context.Context, req domain.SearchRequest) (domain.
 	}
 
 	if !atLeastOne {
-		return domain.AggregatedResponse{}, errors.New("nenhum provider retornou quotes válidas")
+		return domain.AggregatedResponse{}, errors.New("no providers returned valid quotes")
 	}
 
-	// Ordenar por preço, depois duração
+	// Sort by price, then by duration
 	sort.Slice(all, func(i, j int) bool {
 		if all[i].Price == all[j].Price {
 			return all[i].Duration < all[j].Duration
@@ -120,10 +121,10 @@ func (s *Service) Search(ctx context.Context, req domain.SearchRequest) (domain.
 		return all[i].Price < all[j].Price
 	})
 
-	// Cheapest é o primeiro
+	// The cheapest offer is the first
 	cheapest := all[0]
 
-	// Fastest é o menor duration
+	// Find the fastest offer
 	fastest := all[0]
 	for _, q := range all {
 		if q.Duration < fastest.Duration {
@@ -137,9 +138,9 @@ func (s *Service) Search(ctx context.Context, req domain.SearchRequest) (domain.
 		Offers:   all,
 	}
 
-	// Armazenar no cache por 20 segundos
+	// Store the response in cache for 20 seconds
 	s.cache.Set(cacheKey, resp, 20*time.Second)
-	log.Printf("✓ Resposta armazenada em cache: %s", cacheKey)
+	log.Printf("✓ Response cached: %s", cacheKey)
 
 	return resp, nil
 }

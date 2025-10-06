@@ -10,33 +10,33 @@ import (
 )
 
 func main() {
-	log.Println("🚀 Iniciando Flight Price Aggregator...")
+	log.Println("🚀 Starting Flight Price Aggregator...")
 
 	jwtSecret := util.EnvOr("JWT_SECRET", "devsecret")
 	port := util.EnvOr("PORT", "8080")
 
-	// Cache com limpeza automática a cada 1 minuto
+	// Cache with automatic cleanup every 1 minute
 	cache := flights.NewInMemoryTTL()
 	cache.StartCleanup(1 * time.Minute)
-	log.Println("✓ Cache inicializado com limpeza automática")
+	log.Println("✓ Cache initialized with automatic cleanup")
 
-	log.Printf("Nenhum provider configurado. Eles seram configurados no login.")
+	log.Printf("No providers configured yet. They will be set up during login.")
 
-	// Criar service com timeout de 1 minuto e cache
+	// Create service with 1-minute timeout and cache
 	svc := flights.NewService(nil, 1*time.Minute, cache)
-	log.Printf("✓ Service inicializado com %d provider(s)", 0)
+	log.Printf("✓ Service initialized with %d provider(s)", 0)
 
-	// Criar e iniciar servidor HTTP
+	// Create and start HTTP server
 	server := httpserver.New(svc, jwtSecret)
 
-	log.Printf("🌐 Servidor rodando em http://localhost:%s", port)
-	log.Printf("📖 Endpoints disponíveis:")
-	log.Printf("   POST /login - Autenticação")
-	log.Printf("   GET  /flights/search - Buscar voos")
-	log.Printf("   GET  /flights/history - Histórico de preços")
-	log.Printf("   GET  /sse/:route - Server-Sent Events")
+	log.Printf("🌐 Server running at http://localhost:%s", port)
+	log.Printf("📖 Available endpoints:")
+	log.Printf("   POST /login - Authentication")
+	log.Printf("   GET  /flights/search - Search flights")
+	log.Printf("   GET  /flights/history - Flight price history")
+	log.Printf("   GET  /sse/:route - Server-Sent Events stream")
 
 	if err := server.Run(":" + port); err != nil {
-		log.Fatalf("❌ Erro ao iniciar servidor: %v", err)
+		log.Fatalf("❌ Failed to start server: %v", err)
 	}
 }

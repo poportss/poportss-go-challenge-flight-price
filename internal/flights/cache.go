@@ -47,7 +47,7 @@ func (c *InMemoryTTL) Clear() {
 	c.mu.Unlock()
 }
 
-// StartCleanup inicia uma goroutine que remove entradas expiradas periodicamente
+// StartCleanup starts a goroutine that periodically removes expired entries
 func (c *InMemoryTTL) StartCleanup(interval time.Duration) {
 	go func() {
 		ticker := time.NewTicker(interval)

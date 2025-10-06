@@ -16,6 +16,7 @@ import (
 	"github.com/poportss/go-challenge-flight-price/internal/util"
 )
 
+// Amadeus provider
 type Amadeus struct {
 	client       *http.Client
 	baseURL      string
@@ -35,6 +36,7 @@ func NewAmadeus(client *http.Client, token string) *Amadeus {
 
 func (a *Amadeus) Name() string { return "Amadeus" }
 
+// Search implements the Provider interface and fetches flight data from amadeus
 func (a *Amadeus) Search(ctx context.Context, origin, destination string, startDate, endDate time.Time) ([]domain.Quote, error) {
 	url := fmt.Sprintf("%s/v2/shopping/flight-offers?originLocationCode=%s&destinationLocationCode=%s&departureDate=%s&returnDate=%s&adults=1&max=3",
 		a.baseURL, origin, destination, startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))

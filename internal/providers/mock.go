@@ -19,15 +19,16 @@ func NewMockProvider(name string) *MockProvider {
 func (m *MockProvider) Name() string { return m.name }
 
 func (m *MockProvider) Search(ctx context.Context, origin, destination string, startDate, endDate time.Time) ([]domain.Quote, error) {
-	// simula tempo de resposta variável (200–600ms)
+	// Simulate a variable response time (200–600ms)
 	time.Sleep(time.Duration(200+rand.Intn(400)) * time.Millisecond)
 
-	// simula cotações falsas
+	// Simulate mock flight quotes
 	price := 500 + float64(rand.Intn(400))
-	duration := time.Duration(6+rand.Intn(4)) * time.Hour // 6–10h
+	duration := time.Duration(6+rand.Intn(4)) * time.Hour // 6–10 hours
 
-	departure := startDate.Add(10 * time.Hour)
-	arrival := departure.Add(duration)
+	// Set departure and arrival times
+	departure := startDate.Add(10 * time.Hour) // 10 hours after start date
+	arrival := endDate.Add(-2 * time.Hour)     // 2 hours before end date
 
 	return []domain.Quote{
 		{

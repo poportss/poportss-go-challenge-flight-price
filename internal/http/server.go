@@ -21,10 +21,10 @@ func New(service *flights.Service, jwtSecret string) *Server {
 	flightsCtrl := controllers.NewFlightsController(service)
 	sseCtrl := controllers.NewSSEController(service)
 
-	// Rotas públicas
+	// public routes
 	r.POST("/login", authCtrl.Login)
 
-	// Rotas autenticadas
+	// private routes
 	auth := r.Group("/", middleware.JWT(jwtSecret))
 	auth.GET("/flights/search", flightsCtrl.Search)
 	auth.GET("/flights/history", flightsCtrl.History)
