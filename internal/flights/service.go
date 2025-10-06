@@ -138,8 +138,8 @@ func (s *Service) Search(ctx context.Context, req domain.SearchRequest) (domain.
 		Offers:   all,
 	}
 
-	// Store the response in cache for 20 seconds
-	s.cache.Set(cacheKey, resp, 20*time.Second)
+	// Store the response in cache for 30 seconds
+	s.cache.Set(cacheKey, resp, 30*time.Second)
 	log.Printf("✓ Response cached: %s", cacheKey)
 
 	return resp, nil

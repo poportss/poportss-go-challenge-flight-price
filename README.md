@@ -1,7 +1,7 @@
 # ✈️ Go Flight Price Challenge
 
 A concurrent, secure, and extensible **Go microservice** that aggregates **flight offers** from multiple providers — **Amadeus**, **Google Flights (
-SerpAPI)**, and a **Mock provider** — returning the **cheapest**, **fastest**, and **comparable offers** for a given route.
+SerpAPI)** and a **Mock provider** — returning the **cheapest**, **fastest**, and **comparable offers** for a given route.
 
 This project was built as part of a **technical interview challenge** to demonstrate:
 
@@ -27,17 +27,12 @@ This project was built as part of a **technical interview challenge** to demonst
 ├── go.sum
 ├── internal
 │   ├── domain  # Core models and DTOs
-│   │   ├── amadeus.go
-│   │   ├── googleFlights.go
-│   │   └── models.go
 │   ├── flights # Business logic, cache, and aggregator service
-│   │   ├── cache.go
-│   │   └── service.go
 │   ├── http  # Gin-based HTTP server and controllers
 │   │   ├── controllers # Auth, Flights, SSE controllers
 │   │   ├── middleware # JWT authentication 
 │   │   └── server.go
-│   ├── providers  # Integrations with external APIs (Amadeus, Google, AirScraper, Mock)
+│   ├── providers  # Integrations with external APIs (Amadeus, Google, Mock)
 │   │   ├── amadeus.go
 │   │   ├── googleFlights.go
 │   │   ├── interface.go
@@ -88,7 +83,7 @@ Returns a JWT that must be used in subsequent requests.
   "jwt_token": "eyJhbGciOiJIUzI1NiIsInR...",
   "expires_in": 3600,
   "providers": [
-    "GoogleFlights",
+    "Google Flights",
     "Amadeus",
     "Mock"
   ]
@@ -126,7 +121,7 @@ Searches for flight offers from all registered providers concurrently.
     "destination": "JFK"
   },
   "fastest": {
-    "provider": "GoogleFlights",
+    "provider": "Google Flights",
     "airline": "American",
     "price": 907,
     "currency": "USD",
@@ -142,7 +137,7 @@ Searches for flight offers from all registered providers concurrently.
       ...
     },
     {
-      "provider": "GoogleFlights",
+      "provider": "Google Flights",
       ...
     },
     {
@@ -258,46 +253,105 @@ go test -v ./...
 
 ---
 
-## 🐳 Running with Docker
+## 🐳 Run with Docker
 
-The project supports full Docker-based builds using a multi-stage `Dockerfile`.
-
-### 🔹 Build the image
+### Build the container:
 ```bash
-docker build -t flight-price-service .
+docker build -t flight-service .
 ```
 
-### 🔹 Run the container
+### Run with environment variables:
 ```bash
-docker run -p 8080:8080   -e PORT=8080   -e JWT_SECRET=devsecret   -e AMADEUS_BASE_URL=https://test.api.amadeus.com   -e AMADEUS_CLIENT_ID=your_amadeus_client_id   -e AMADEUS_CLIENT_SECRET=your_amadeus_client_secret   -e SERP_API_GOOGLEFLIGHTS_BASE_URL=https://serpapi.com/search   -e SERP_API_GOOGLEFLIGHTS_API_KEY=your_serpapi_key   flight-price-service
+docker run -p 8080:8080 \
+  -e JWT_SECRET=devsecret \
+  -e AMADEUS_CLIENT_ID=your_client_id \
+  -e AMADEUS_CLIENT_SECRET=your_client_secret \
+  -e SERP_API_GOOGLEFLIGHTS_API_KEY=your_serpapi_key \
+  flight-service
 ```
 
-Then open: [http://localhost:8080](http://localhost:8080)
+### Or via Docker Compose:
+```bash
+docker-compose up --build
+```
 
 ---
 
-## 🧩 Run with Docker Compose (recommended)
+## 🔒 HTTPS / TLS Configuration for Production
 
-If you prefer to use Docker Compose:
+To enable **secure HTTPS communication** in production, the Flight Price Aggregator can be deployed either behind a **reverse proxy** (recommended) or configured to handle TLS directly.
+
+---
+
+### 🧩 Option 1: Reverse Proxy (Recommended)
+
+Run the Go service internally over HTTP (port `8080`) and use a reverse proxy (Nginx, Caddy, or Traefik) to terminate HTTPS.
+
+**Example Nginx configuration:**
+```nginx
+server {
+    listen 443 ssl;
+    server_name api.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/api.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.example.com/privkey.pem;
+
+    location / {
+        proxy_pass http://flight-service:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}
+```
+
+Use [Certbot](https://certbot.eff.org/) to automatically issue and renew SSL certificates.
+
+---
+
+### 🔧 Option 2: Direct TLS in Go (Alternative)
+If you prefer to run HTTPS directly from Go:
 
 ```bash
-docker compose up --build
+export TLS_CERT_FILE=/etc/ssl/certs/server.crt
+export TLS_KEY_FILE=/etc/ssl/private/server.key
 ```
 
-The compose file automatically reads variables from your `.env`.
-
-### Example `.env`
-```env
-PORT=8080
-JWT_SECRET=devsecret
-
-AMADEUS_BASE_URL=https://test.api.amadeus.com
-AMADEUS_CLIENT_ID=your_amadeus_client_id
-AMADEUS_CLIENT_SECRET=your_amadeus_client_secret
-
-SERP_API_GOOGLEFLIGHTS_BASE_URL=https://serpapi.com/search
-SERP_API_GOOGLEFLIGHTS_API_KEY=your_serpapi_key
+Modify `main.go`:
+```go
+log.Fatal(server.RunTLS(":443", os.Getenv("TLS_CERT_FILE"), os.Getenv("TLS_KEY_FILE")))
 ```
+
+---
+
+### 🧪 Option 3: Local Development (Self-Signed)
+
+For local testing:
+```bash
+openssl req -x509 -newkey rsa:4096 -nodes -keyout server.key -out server.crt -days 365
+go run ./cmd/api --tls --cert=server.crt --key=server.key
+```
+
+Or with Docker Compose:
+```yaml
+services:
+  flight-service:
+    build: .
+    environment:
+      - TLS_CERT_FILE=/certs/server.crt
+      - TLS_KEY_FILE=/certs/server.key
+    volumes:
+      - ./certs:/certs:ro
+```
+
+---
+
+### ✅ Recommendation
+
+- Use **Reverse Proxy (Option 1)** for production deployments.
+- Automate renewal with **Certbot** or **Traefik’s built-in Let’s Encrypt integration**.
+- Never embed or copy TLS secrets inside Docker images — mount them securely at runtime.
 
 ---
 
@@ -305,9 +359,10 @@ SERP_API_GOOGLEFLIGHTS_API_KEY=your_serpapi_key
 
 **Rafael Portela**  
 Go Developer | Cloud & API Engineering  
-📧 [LinkedIn](https://www.linkedin.com/in/rafaelportela-dev)
+📧 [LinkedIn Profile](https://www.linkedin.com/in/rafaelportela-dev)
 
 ---
 
 ## 📄 License
-MIT License — free to use, modify, and distribute.
+
+**MIT License** — free to use, modify, and share.

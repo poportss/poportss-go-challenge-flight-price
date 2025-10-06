@@ -59,6 +59,6 @@ func (a *AuthController) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"jwt_token":  token,
 		"expires_in": 3600,
-		"providers":  []string{"GoogleFlights", "Amadeus", "Ports Airlines"},
+		"providers":  []string{"Google Flights", "Amadeus", "Ports Airlines"},
 	})
 }
